@@ -29,6 +29,10 @@ public class SecurityPrincipal implements UserDetails {
         return id;
     }
 
+    public Long getUserId() {
+        return id;
+    }
+
     public String getEmail() {
         return email;
     }
