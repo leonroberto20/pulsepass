@@ -62,19 +62,19 @@ public class SecurityConfig {
                         "/swagger-ui.html"
                 ).permitAll()
 
-                // Public catalog consultation
-                .requestMatchers(HttpMethod.GET, "/api/events/published").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/artists/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/venues/**").permitAll()
+                // Operational access control (STAFF or ADMIN)
+                .requestMatchers(HttpMethod.PATCH, "/api/tickets/*/use").hasAnyRole("STAFF", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/events/*/tickets/paid").hasAnyRole("STAFF", "ADMIN")
 
                 // Event administrative operations (ADMIN)
                 .requestMatchers(HttpMethod.POST, "/api/events").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/events/*/publish").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/events/*/artists/*").hasRole("ADMIN")
 
-                // Operational access control (STAFF or ADMIN)
-                .requestMatchers(HttpMethod.PATCH, "/api/tickets/*/use").hasAnyRole("STAFF", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/events/*/tickets/paid").hasAnyRole("STAFF", "ADMIN")
+                // Public catalog consultation
+                .requestMatchers(HttpMethod.GET, "/api/events/published", "/api/events/by-artist", "/api/events/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/artists/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/venues/**").permitAll()
 
                 // All other endpoints require authentication
                 .anyRequest().authenticated()

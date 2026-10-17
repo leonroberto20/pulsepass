@@ -9,14 +9,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import org.springframework.data.domain.Persistable;
 
 import java.util.Objects;
 
 @Entity
 @Table(name = "user_roles")
 @IdClass(UserRoleId.class)
-public class UserRole {
+public class UserRole implements Persistable<UserRoleId> {
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -28,12 +32,32 @@ public class UserRole {
     @Column(name = "role", nullable = false, length = 50)
     private RoleName role;
 
+    @Transient
+    private boolean isNew = true;
+
     public UserRole() {
     }
 
     public UserRole(User user, RoleName role) {
         this.user = user;
         this.role = role;
+        this.isNew = true;
+    }
+
+    @Override
+    public UserRoleId getId() {
+        return new UserRoleId(user != null ? user.getId() : null, role);
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNew = false;
     }
 
     public User getUser() {

@@ -7,6 +7,7 @@ import com.pulsepass.pulsepass.service.EventService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,12 +30,14 @@ public class EventController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventResponse> create(@Valid @RequestBody CreateEventRequest request) {
         EventResponse created = eventService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/{eventCode}")
+    @PreAuthorize("@authorizationService.canAccessEvent(authentication, #eventCode)")
     public ResponseEntity<EventResponse> findByCode(@PathVariable String eventCode) {
         return ResponseEntity.ok(eventService.findByCode(eventCode));
     }
@@ -45,11 +48,13 @@ public class EventController {
     }
 
     @PatchMapping("/{eventCode}/publish")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventResponse> publish(@PathVariable String eventCode) {
         return ResponseEntity.ok(eventService.publish(eventCode));
     }
 
     @PostMapping("/{eventCode}/artists/{artistId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventResponse> addArtist(
             @PathVariable String eventCode,
             @PathVariable Long artistId

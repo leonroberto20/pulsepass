@@ -7,13 +7,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import org.springframework.data.domain.Persistable;
 
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "user_credentials")
-public class UserCredential {
+public class UserCredential implements Persistable<Long> {
 
     @Id
     @Column(name = "user_id")
@@ -30,6 +34,9 @@ public class UserCredential {
     @Column(name = "password_changed_at")
     private OffsetDateTime passwordChangedAt;
 
+    @Transient
+    private boolean isNew = true;
+
     public UserCredential() {
     }
 
@@ -40,6 +47,23 @@ public class UserCredential {
         }
         this.passwordHash = passwordHash;
         this.passwordChangedAt = passwordChangedAt != null ? passwordChangedAt : OffsetDateTime.now();
+        this.isNew = true;
+    }
+
+    @Override
+    public Long getId() {
+        return userId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNew = false;
     }
 
     public Long getUserId() {
