@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: pulsepass-test
+
+pulsepass:
+  security:
+    jwt:
+      issuer: pulsepass-api-test
+      # Test secret in Base64 (48 bytes decoded, sufficient for HS256)
+      secret-base64: cHVsc2VwYXNzLXNlY3JldC1rZXktZm9yLXRlc3RpbmctcHVycG9zZXMtb25seS0yNTY=
+      access-token-ttl: PT15M

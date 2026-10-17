@@ -6,6 +6,7 @@ import com.pulsepass.pulsepass.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,11 +31,13 @@ public class UserController {
     }
 
     @GetMapping("/by-email")
+    @PreAuthorize("hasRole('ADMIN') or @authorizationService.isUserOwner(authentication, #email)")
     public ResponseEntity<UserResponse> findByEmail(@RequestParam String email) {
         return ResponseEntity.ok(userService.findByEmail(email));
     }
 
     @GetMapping("/by-username")
+    @PreAuthorize("hasRole('ADMIN') or @authorizationService.isUserOwnerByUsername(authentication, #username)")
     public ResponseEntity<UserResponse> findByUsername(@RequestParam String username) {
         return ResponseEntity.ok(userService.findByUsername(username));
     }
