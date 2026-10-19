@@ -1,0 +1,12 @@
+# PulsePass E2E Test Suite - Git Ignore
+# Proteger secretos locales y exportaciones accidentales de Postman
+
+# Exportaciones de variables con tokens o credenciales reales
+*secret*
+*.tokens.json
+*.local-secrets.json
+
+# Reportes y logs temporales
+*.log
+*.tmp
+temp/
