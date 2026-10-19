@@ -1,0 +1,2571 @@
+{
+  "info": {
+    "_postman_id": "f7d8e6c4-1a2b-4c3d-8e5f-9a0b1c2d3e4f",
+    "name": "PulsePass - E2E Manual",
+    "description": "Suite de pruebas end-to-end manuales de caja negra para PulsePass (Fase 5). Cubre 22 rutas HTTP (20 negocio + login + me), roles USER, STAFF, ADMIN y anónimo, control de propiedad (anti-IDOR), ciclo de vida de tickets y matriz de errores. CERO SCRIPTS.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Preparación / conectividad",
+      "item": [
+        {
+          "name": "TC-CONN-01 - Verificación de Conectividad con la API",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/venues/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "venues",
+                "active"
+              ]
+            },
+            "description": "ID: TC-CONN-01\nObjetivo: Verificar conectividad HTTP con el backend Spring Boot y PostgreSQL.\nPrecondiciones: Spring Boot corriendo en :8080 con BD pulsepass y fixtures cargados.\nAutorización: Ninguna (Pública).\nEjecución: Enviar request Send.\nHTTP esperado: 200 OK.\nRevisión manual: Array JSON con recintos activos (ej. VEN-BOG-01).\nEvidencia: Anotar resultado en registro-ejecucion-manual.md.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Venues (2 rutas)",
+      "item": [
+        {
+          "name": "TC-VEN-01 - Listar venues activos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/venues/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "venues",
+                "active"
+              ]
+            },
+            "description": "ID: TC-VEN-01\nObjetivo: Consultar catálogo de recintos activos.\nPrecondiciones: Fixtures de venues en BD.\nAutorización: Ninguna (Pública).\nHTTP esperado: 200 OK.\nRevisión manual: Lista de objetos VenueResponse con id, code, name, city, address, capacity, active=true.\nEvidencia: Copiar code del primer venue a {{venueActiveCode}} si varía.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-VEN-02 - Consultar venue activo por código",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/venues/{{venueActiveCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "venues",
+                "{{venueActiveCode}}"
+              ]
+            },
+            "description": "ID: TC-VEN-02\nObjetivo: Obtener detalle de un venue específico por su código.\nPrecondiciones: {{venueActiveCode}} existe en BD.\nAutorización: Ninguna (Pública).\nHTTP esperado: 200 OK.\nRevisión manual: Objeto VenueResponse con código coincidente y active=true.\nEvidencia: Anotar HTTP y campos observados.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-VEN-03 - Consultar venue inexistente (Negativo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/venues/VEN-INEXISTENTE-99",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "venues",
+                "VEN-INEXISTENTE-99"
+              ]
+            },
+            "description": "ID: TC-VEN-03\nObjetivo: Validar respuesta 404 al solicitar un recinto que no existe.\nPrecondiciones: El código no existe en BD.\nAutorización: Ninguna (Pública).\nHTTP esperado: 404 Not Found.\nRevisión manual: Formato ErrorResponse (status=404, error=Not Found, message seguro).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Artists (3 rutas)",
+      "item": [
+        {
+          "name": "TC-ART-01 - Listar artistas activos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/artists/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "artists",
+                "active"
+              ]
+            },
+            "description": "ID: TC-ART-01\nObjetivo: Consultar catálogo de artistas activos.\nPrecondiciones: Artistas iniciales insertados por migración V2.\nAutorización: Ninguna (Pública).\nHTTP esperado: 200 OK.\nRevisión manual: Lista de ArtistResponse (id, stageName, country, genre, active=true).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-ART-02 - Consultar artista por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/artists/{{artistId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "artists",
+                "{{artistId}}"
+              ]
+            },
+            "description": "ID: TC-ART-02\nObjetivo: Obtener detalle de artista por identificador numérico.\nPrecondiciones: Artista con ID {{artistId}} existe en BD.\nAutorización: Ninguna (Pública).\nHTTP esperado: 200 OK.\nRevisión manual: Objeto ArtistResponse con ID coincidente.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-ART-03 - Consultar artista por stage name",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/artists/by-stage-name?stageName={{artistStageName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "artists",
+                "by-stage-name"
+              ],
+              "query": [
+                {
+                  "key": "stageName",
+                  "value": "{{artistStageName}}"
+                }
+              ]
+            },
+            "description": "ID: TC-ART-03\nObjetivo: Buscar artista por su nombre artístico exacto.\nPrecondiciones: {{artistStageName}} existe.\nAutorización: Ninguna (Pública).\nHTTP esperado: 200 OK.\nRevisión manual: Objeto ArtistResponse con stageName coincidente.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-ART-04 - Consultar artista inexistente (Negativo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/artists/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "artists",
+                "999999"
+              ]
+            },
+            "description": "ID: TC-ART-04\nObjetivo: Validar respuesta 404 al buscar artista inexistente.\nAutorización: Ninguna (Pública).\nHTTP esperado: 404 Not Found.\nRevisión manual: ErrorResponse estructurado.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Auth / usuarios (registro, login, me)",
+      "item": [
+        {
+          "name": "TC-AUTH-001 - Registro de USER_A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "ID: TC-AUTH-001\nObjetivo: Registrar nuevo usuario normal USER_A.\nPrecondiciones: username y email no registrados previamente.\nAutorización: Ninguna (Pública).\nHTTP esperado: 201 Created.\nRevisión manual: UserResponse con active=true, sin exponer password ni passwordHash.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userAUsername}}\",\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{userAPassword}}\",\n  \"firstName\": \"Andrea\",\n  \"lastName\": \"Pruebas\",\n  \"phone\": \"+573001234567\",\n  \"city\": \"Bogota\",\n  \"birthDate\": \"1998-05-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-001b - Registro de USER_B",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "ID: TC-AUTH-001b\nObjetivo: Registrar segundo usuario normal USER_B para pruebas de IDOR.\nHTTP esperado: 201 Created.\nRevisión manual: UserResponse correcto.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userBUsername}}\",\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{userBPassword}}\",\n  \"firstName\": \"Bernardo\",\n  \"lastName\": \"Pruebas\",\n  \"phone\": \"+573009876543\",\n  \"city\": \"Medellin\",\n  \"birthDate\": \"1995-10-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-002 - Login con username de USER_A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "ID: TC-AUTH-002\nObjetivo: Autenticar USER_A con username y obtener JWT.\nHTTP esperado: 200 OK.\nRevisión manual: accessToken no vacío, tokenType=Bearer, expiresInSeconds=900.\nACCIÓN MANUAL: Copiar accessToken a la variable {{userAToken}} del entorno.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userAUsername}}\",\n  \"password\": \"{{userAPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-003 - Login con email de USER_A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "ID: TC-AUTH-003\nObjetivo: Validar que el login admita email indistintamente.\nHTTP esperado: 200 OK.\nRevisión manual: Mismo usuario autenticado, nuevo JWT válido.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userAEmail}}\",\n  \"password\": \"{{userAPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-002b - Login de USER_B",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "ID: TC-AUTH-002b\nObjetivo: Autenticar USER_B y obtener su JWT.\nHTTP esperado: 200 OK.\nACCIÓN MANUAL: Copiar accessToken a la variable {{userBToken}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userBUsername}}\",\n  \"password\": \"{{userBPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-002c - Login de STAFF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "ID: TC-AUTH-002c\nObjetivo: Autenticar usuario con rol STAFF.\nPrecondiciones: Usuario staff.e2e cargado vía seed-e2e.sql.\nHTTP esperado: 200 OK.\nACCIÓN MANUAL: Copiar accessToken a la variable {{staffToken}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{staffIdentifier}}\",\n  \"password\": \"{{staffPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-002d - Login de ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "ID: TC-AUTH-002d\nObjetivo: Autenticar usuario con rol ADMIN.\nPrecondiciones: Usuario admin.e2e cargado vía seed-e2e.sql.\nHTTP esperado: 200 OK.\nACCIÓN MANUAL: Copiar accessToken a la variable {{adminToken}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{adminIdentifier}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-006 - Consultar /api/auth/me con USER_A",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "ID: TC-AUTH-006\nObjetivo: Verificar identidad y claims del usuario autenticado USER_A.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: AuthenticatedUserResponse con username, email, roles=[ROLE_USER]. Sin contraseñas.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-006b - Consultar /api/auth/me con STAFF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "ID: TC-AUTH-006b\nObjetivo: Verificar identidad y roles del actor STAFF.\nAutorización: Bearer {{staffToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: roles incluye ROLE_STAFF.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-006c - Consultar /api/auth/me con ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "ID: TC-AUTH-006c\nObjetivo: Verificar identidad y roles del actor ADMIN.\nAutorización: Bearer {{adminToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: roles incluye ROLE_ADMIN.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Usuarios / consulta y propiedad (2 rutas)",
+      "item": [
+        {
+          "name": "TC-USR-01 - Propietario consulta su usuario por email (USER_A)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/by-email?email={{userAEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "by-email"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{userAEmail}}"
+                }
+              ]
+            },
+            "description": "ID: TC-USR-01\nObjetivo: Propietario consulta su propio perfil por email.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: UserResponse con datos de Andrea.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-USR-02 - Propietario consulta su usuario por username (USER_A)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/by-username?username={{userAUsername}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "by-username"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "{{userAUsername}}"
+                }
+              ]
+            },
+            "description": "ID: TC-USR-02\nObjetivo: Propietario consulta su propio perfil por username.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: UserResponse coincide.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-USR-03 - ADMIN consulta usuario por email",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/by-email?email={{userAEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "by-email"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{userAEmail}}"
+                }
+              ]
+            },
+            "description": "ID: TC-USR-03\nObjetivo: ADMIN consulta perfil de un usuario cualquiera.\nAutorización: Bearer {{adminToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: Acceso concedido al administrador.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-USR-04 - IDOR: USER_B intenta consultar email de USER_A (Negativo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/by-email?email={{userAEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "by-email"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{userAEmail}}"
+                }
+              ]
+            },
+            "description": "ID: TC-USR-04\nObjetivo: Validar que USER_B no pueda ver el perfil de USER_A.\nAutorización: Bearer {{userBToken}}.\nHTTP esperado: 403 Forbidden.\nRevisión manual: ErrorResponse con status 403. Sin filtración de datos.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-USR-05 - IDOR: USER_B intenta consultar username de USER_A (Negativo)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/by-username?username={{userAUsername}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "by-username"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "{{userAUsername}}"
+                }
+              ]
+            },
+            "description": "ID: TC-USR-05\nObjetivo: Validar que USER_B no pueda ver el perfil por username de USER_A.\nAutorización: Bearer {{userBToken}}.\nHTTP esperado: 403 Forbidden.\nRevisión manual: ErrorResponse con status 403.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 Events / administración y visibilidad (6 rutas)",
+      "item": [
+        {
+          "name": "TC-EVT-01 - Crear evento como ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "description": "ID: TC-EVT-01\nObjetivo: ADMIN crea un nuevo evento en estado DRAFT.\nAutorización: Bearer {{adminToken}}.\nHTTP esperado: 201 Created.\nRevisión manual: EventResponse con status=DRAFT y eventCode={{newEventCode}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventCode\": \"{{newEventCode}}\",\n  \"name\": \"Festival Rock PulsePass {{runId}}\",\n  \"description\": \"Evento de prueba creado manualmente por ADMIN en suite E2E\",\n  \"category\": \"MUSIC\",\n  \"eventDate\": \"2026-12-15T20:00:00Z\",\n  \"minimumAge\": 18,\n  \"venueCode\": \"{{venueActiveCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-EVT-02 - Consultar borrador creado como ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{newEventCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{newEventCode}}"
+              ]
+            },
+            "description": "ID: TC-EVT-02\nObjetivo: ADMIN consulta evento recién creado en borrador.\nAutorización: Bearer {{adminToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: EventResponse devuelto con status=DRAFT.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-EVT-03 - Consultar eventos publicados (Público)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/published",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "published"
+              ]
+            },
+            "description": "ID: TC-EVT-03\nObjetivo: Catálogo público de eventos publicados. No debe incluir borradores.\nAutorización: Ninguna (Pública).\nHTTP esperado: 200 OK.\nRevisión manual: Lista de EventSummaryResponse. Verificar que {{newEventCode}} y {{draftEventCode}} NO aparecen.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-EVT-04 - Publicar evento con ADMIN",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{eventToPublishCode}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{eventToPublishCode}}",
+                "publish"
+              ]
+            },
+            "description": "ID: TC-EVT-04\nObjetivo: Transicionar evento de DRAFT a PUBLISHED.\nAutorización: Bearer {{adminToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: EventResponse refleja status=PUBLISHED.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-EVT-05 - Asociar artista a evento con ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{newEventCode}}/artists/{{artistId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{newEventCode}}",
+                "artists",
+                "{{artistId}}"
+              ]
+            },
+            "description": "ID: TC-EVT-05\nObjetivo: ADMIN vincula artista a evento.\nAutorización: Bearer {{adminToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: EventResponse contiene el artista en la colección artists.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-EVT-06 - Buscar eventos por artista (Público)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/by-artist?stageName={{artistStageName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "by-artist"
+              ],
+              "query": [
+                {
+                  "key": "stageName",
+                  "value": "{{artistStageName}}"
+                }
+              ]
+            },
+            "description": "ID: TC-EVT-06\nObjetivo: Consulta pública de eventos asociados a un artista.\nAutorización: Ninguna (Pública).\nHTTP esperado: 200 OK.\nRevisión manual: Lista de eventos publicados asociados al artista.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-EVT-07 - Consultar detalle de evento publicado (Público)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{publishedEventCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{publishedEventCode}}"
+              ]
+            },
+            "description": "ID: TC-EVT-07\nObjetivo: Visitante anónimo consulta detalle de evento publicado.\nAutorización: Ninguna (Pública).\nHTTP esperado: 200 OK.\nRevisión manual: EventResponse completo.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 Tickets / compra, consulta y ciclo de vida (6 rutas)",
+      "item": [
+        {
+          "name": "TC-TKT-01 - Compra de Ticket 1 para USER_A (Cancelable)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "description": "ID: TC-TKT-01\nObjetivo: USER_A compra una entrada para evento publicado.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 201 Created.\nRevisión manual: TicketResponse con status=PAID y precio calculado.\nACCIÓN MANUAL: Copiar ticketCode retornado a la variable {{ticketCancelableCode}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"{{userAEmail}}\",\n  \"eventCode\": \"{{publishedEventCode}}\",\n  \"type\": \"GENERAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-TKT-01b - Compra de Ticket 2 para USER_A (Para Uso por Staff)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "description": "ID: TC-TKT-01b\nObjetivo: USER_A compra una segunda entrada independiente para usarla.\nHTTP esperado: 201 Created.\nACCIÓN MANUAL: Copiar ticketCode a la variable {{ticketUsableCode}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"{{userAEmail}}\",\n  \"eventCode\": \"{{publishedEventCode}}\",\n  \"type\": \"VIP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-TKT-02 - Consultar ticket por código (Propietario USER_A)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{ticketCancelableCode}}"
+              ]
+            },
+            "description": "ID: TC-TKT-02\nObjetivo: Propietario consulta su ticket por código.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: TicketResponse con datos de {{ticketCancelableCode}}.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-TKT-03 - Consultar tickets por email (Propietario USER_A)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/by-user?email={{userAEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "by-user"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{userAEmail}}"
+                }
+              ]
+            },
+            "description": "ID: TC-TKT-03\nObjetivo: Propietario consulta la lista de todas sus entradas adquiridas.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: Lista de entradas asociadas a {{userAEmail}}.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-TKT-04 - Consultar tickets pagados de un evento (STAFF)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{publishedEventCode}}/tickets/paid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{publishedEventCode}}",
+                "tickets",
+                "paid"
+              ]
+            },
+            "description": "ID: TC-TKT-04\nObjetivo: Operador STAFF consulta entradas pagadas para control de acceso.\nAutorización: Bearer {{staffToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: Lista de entradas en estado PAID.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-TKT-05 - Cancelar ticket por propietario (USER_A)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{ticketCancelableCode}}",
+                "cancel"
+              ]
+            },
+            "description": "ID: TC-TKT-05\nObjetivo: Propietario cancela su ticket cancelable.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: TicketResponse muestra status=CANCELLED.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-TKT-06 - Marcar ticket como usado por STAFF",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{ticketUsableCode}}/use",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{ticketUsableCode}}",
+                "use"
+              ]
+            },
+            "description": "ID: TC-TKT-06\nObjetivo: STAFF valida y redime un ticket válido.\nAutorización: Bearer {{staffToken}}.\nHTTP esperado: 200 OK.\nRevisión manual: TicketResponse muestra status=USED.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 Seguridad / escenarios negativos",
+      "item": [
+        {
+          "name": "TC-SEC-001 - USER intenta crear evento (Negativo 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "description": "ID: TC-SEC-001\nObjetivo: Validar que rol USER no tiene permiso para crear eventos.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 403 Forbidden.\nRevisión manual: ErrorResponse con status 403.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventCode\": \"EVT-FAIL-01\",\n  \"name\": \"Evento no permitido\",\n  \"category\": \"MUSIC\",\n  \"eventDate\": \"2026-12-25T20:00:00Z\",\n  \"minimumAge\": 0,\n  \"venueCode\": \"{{venueActiveCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-002 - USER intenta publicar evento (Negativo 403)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{draftEventCode}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{draftEventCode}}",
+                "publish"
+              ]
+            },
+            "description": "ID: TC-SEC-002\nObjetivo: Validar que rol USER no puede publicar eventos.\nHTTP esperado: 403 Forbidden.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-002b - STAFF intenta publicar evento (Negativo 403)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{draftEventCode}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{draftEventCode}}",
+                "publish"
+              ]
+            },
+            "description": "ID: TC-SEC-002b\nObjetivo: Validar que rol STAFF no puede publicar eventos (exclusivo ADMIN).\nHTTP esperado: 403 Forbidden.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-003 - USER intenta asociar artista (Negativo 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{draftEventCode}}/artists/{{artistId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{draftEventCode}}",
+                "artists",
+                "{{artistId}}"
+              ]
+            },
+            "description": "ID: TC-SEC-003\nObjetivo: Validar que rol USER no puede asociar artistas a eventos.\nHTTP esperado: 403 Forbidden.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-004 - Anónimo intenta consultar borrador (Negativo 403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{draftEventCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{draftEventCode}}"
+              ]
+            },
+            "description": "ID: TC-SEC-004\nObjetivo: Evitar filtración de borradores a visitantes anónimos.\nAutorización: Ninguna.\nHTTP esperado: 403 Forbidden.\nRevisión manual: Acceso denegado, no se retornan datos del evento borrador.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-004b - USER intenta consultar borrador (Negativo 403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{draftEventCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{draftEventCode}}"
+              ]
+            },
+            "description": "ID: TC-SEC-004b\nObjetivo: Evitar filtración de eventos en borrador a rol USER.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 403 Forbidden.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-008 - Compra a nombre de otro usuario (Negativo 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "description": "ID: TC-SEC-008\nObjetivo: Anti-suplantación: USER_A no puede comprar ticket usando el email de USER_B.\nAutorización: Bearer {{userAToken}}.\nHTTP esperado: 403 Forbidden.\nRevisión manual: ErrorResponse, no se crea ningún ticket.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"{{userBEmail}}\",\n  \"eventCode\": \"{{publishedEventCode}}\",\n  \"type\": \"GENERAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-009 - IDOR: USER_B intenta leer ticket de USER_A (Negativo 403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{ticketCancelableCode}}"
+              ]
+            },
+            "description": "ID: TC-SEC-009\nObjetivo: Prevenir lectura de entradas ajenas.\nAutorización: Bearer {{userBToken}}.\nHTTP esperado: 403 Forbidden.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-010 - IDOR: USER_B intenta listar tickets del email de USER_A (Negativo 403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/by-user?email={{userAEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "by-user"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{userAEmail}}"
+                }
+              ]
+            },
+            "description": "ID: TC-SEC-010\nObjetivo: Prevenir listado de tickets ajenos.\nHTTP esperado: 403 Forbidden.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-011 - IDOR: USER_B intenta cancelar ticket de USER_A (Negativo 403)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{ticketCancelableCode}}",
+                "cancel"
+              ]
+            },
+            "description": "ID: TC-SEC-011\nObjetivo: Prevenir que un usuario ajeno cancele una entrada.\nHTTP esperado: 403 Forbidden.\nRevisión manual: El ticket permanece intacto en su estado.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userBToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-012 - USER intenta marcar ticket como usado (Negativo 403)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{ticketUsableCode}}/use",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{ticketUsableCode}}",
+                "use"
+              ]
+            },
+            "description": "ID: TC-SEC-012\nObjetivo: Exclusividad de uso: solo STAFF o ADMIN pueden marcar tickets como USED.\nHTTP esperado: 403 Forbidden.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-013 - USER intenta ver tickets pagados (Negativo 403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{publishedEventCode}}/tickets/paid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{publishedEventCode}}",
+                "tickets",
+                "paid"
+              ]
+            },
+            "description": "ID: TC-SEC-013\nObjetivo: USER no puede ver listado operativo de tickets pagados.\nHTTP esperado: 403 Forbidden.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-004 - Login con contraseña errónea (Negativo 401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "ID: TC-AUTH-004\nObjetivo: Validar respuesta 401 sin revelar detalles de enumeración.\nHTTP esperado: 401 Unauthorized.\nRevisión manual: ErrorResponse con status=401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{userAUsername}}\",\n  \"password\": \"PasswordIncorrecta99!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-005 - Login con usuario inexistente (Negativo 401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "ID: TC-AUTH-005\nObjetivo: Respuesta 401 genérica ante usuario inexistente.\nHTTP esperado: 401 Unauthorized.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"usuario_que_no_existe_99\",\n  \"password\": \"PasswordCualquiera123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-007 - Recurso protegido sin header Authorization (Negativo 401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "ID: TC-AUTH-007\nObjetivo: Validar que endpoint protegido rechace peticiones sin header Bearer.\nHTTP esperado: 401 Unauthorized.\nRevisión manual: ErrorResponse con status 401.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-008 - Header Bearer inventado / malformado (Negativo 401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer tokenInvalido12345",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "ID: TC-AUTH-008\nObjetivo: Rechazo de token malformado.\nHTTP esperado: 401 Unauthorized."
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-009 - JWT alterado / firma rota (Negativo 401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAToken}}X",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "ID: TC-AUTH-009\nObjetivo: Validar rechazo de JWT manipulado en su firma.\nHTTP esperado: 401 Unauthorized."
+          },
+          "response": []
+        },
+        {
+          "name": "TC-AUTH-013 - Login de usuario inactivo (Negativo 401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "ID: TC-AUTH-013\nObjetivo: Usuario inactivo no debe poder autenticarse.\nHTTP esperado: 401 Unauthorized.\nRevisión manual: Acceso denegado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{inactiveIdentifier}}\",\n  \"password\": \"{{inactivePassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 Validaciones y errores HTTP",
+      "item": [
+        {
+          "name": "TC-HTTP-400-01 - Registro con email inválido y password corta (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "ID: TC-HTTP-400-01\nObjetivo: Validar validaciones Jakarta Validation (email inválido, password < 12 caracteres).\nHTTP esperado: 400 Bad Request.\nRevisión manual: ErrorResponse con details conteniendo campos con error.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"failuser\",\n  \"email\": \"email-invalido-sin-arroba\",\n  \"password\": \"corta\",\n  \"firstName\": \"Fail\",\n  \"lastName\": \"User\",\n  \"birthDate\": \"2000-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-HTTP-400-02 - Crear evento con campos obligatorios vacíos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "description": "ID: TC-HTTP-400-02\nObjetivo: Validar validaciones en creación de evento.\nHTTP esperado: 400 Bad Request.\nRevisión manual: ErrorResponse con mapa de details.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventCode\": \"\",\n  \"name\": \"\",\n  \"venueCode\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-HTTP-404-01 - Recurso evento no encontrado (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/EVT-TOTALMENTE-INEXISTENTE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "EVT-TOTALMENTE-INEXISTENTE"
+              ]
+            },
+            "description": "ID: TC-HTTP-404-01\nObjetivo: Evento inexistente produce 404 Not Found.\nHTTP esperado: 404 Not Found.\nRevisión manual: ErrorResponse estructurado.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-HTTP-404-02 - Recurso ticket no encontrado (ADMIN) (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/TKT-TOTALMENTE-INEXISTENTE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "TKT-TOTALMENTE-INEXISTENTE"
+              ]
+            },
+            "description": "ID: TC-HTTP-404-02\nObjetivo: Ticket inexistente consultado por ADMIN produce 404.\nHTTP esperado: 404 Not Found.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-HTTP-409-01 - Registro duplicado de usuario (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "ID: TC-HTTP-409-01\nObjetivo: Validar rechazo de email/username ya existente en el sistema.\nHTTP esperado: 409 Conflict.\nRevisión manual: ErrorResponse con mensaje descriptivo de duplicidad.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userAUsername}}\",\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{userAPassword}}\",\n  \"firstName\": \"Andrea\",\n  \"lastName\": \"Duplicada\",\n  \"birthDate\": \"1998-05-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-HTTP-409-02 - Cancelar ticket previamente cancelado (409)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{ticketCancelableCode}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{ticketCancelableCode}}",
+                "cancel"
+              ]
+            },
+            "description": "ID: TC-HTTP-409-02\nObjetivo: Validar que un ticket ya cancelado no pueda cancelarse nuevamente.\nPrecondiciones: El ticket {{ticketCancelableCode}} ya fue cancelado en TC-TKT-05.\nHTTP esperado: 409 Conflict (o regla de negocio correspondiente).\nRevisión manual: ErrorResponse indicando estado inválido para la transición.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC-HTTP-409-03 - Marcar como usado un ticket ya usado (409)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{ticketUsableCode}}/use",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{ticketUsableCode}}",
+                "use"
+              ]
+            },
+            "description": "ID: TC-HTTP-409-03\nObjetivo: Validar que un ticket en estado USED no pueda reutilizarse.\nPrecondiciones: El ticket {{ticketUsableCode}} ya fue marcado como USED en TC-TKT-06.\nHTTP esperado: 409 Conflict.\nRevisión manual: Rechazo de doble redención.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 Flujos de negocio / secuencia recomendada",
+      "item": [
+        {
+          "name": "Paso 1 (Flujo A) - Verificación catálogo público de venues y artistas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/venues/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "venues",
+                "active"
+              ]
+            },
+            "description": "Paso 1 del recorrido end-to-end integrado (Flujo A - Descubrimiento).\nVerifica venues activos y confirma disponibilidad.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Paso 2 (Flujo B) - Autenticación y obtención de credenciales",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Paso 2 del recorrido (Flujo B - Auth).\nRealiza login de ADMIN y copia el accessToken a {{adminToken}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{adminIdentifier}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Paso 3 (Flujo C) - Gestión de catálogo: publicar evento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{eventToPublishCode}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{eventToPublishCode}}",
+                "publish"
+              ]
+            },
+            "description": "Paso 3 del recorrido (Flujo C - Gestión Catálogo ADMIN).\nPublica evento para habilitar su venta y visibilidad.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Paso 4 (Flujo D) - Compra y uso de tickets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "description": "Paso 4 del recorrido (Flujo D - Compra y Ciclo de Vida).\nUSER_A adquiere una entrada verificable.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userEmail\": \"{{userAEmail}}\",\n  \"eventCode\": \"{{publishedEventCode}}\",\n  \"type\": \"GENERAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userAToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
