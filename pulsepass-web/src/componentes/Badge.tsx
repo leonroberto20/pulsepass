@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
 import clsx from 'clsx'
-import type { EventStatus } from '@/funcionalidades/eventos/tipos'
+import type { EventCategory, EventStatus } from '@/funcionalidades/eventos/tipos'
 import type { TicketStatus, TicketType } from '@/funcionalidades/tickets/tipos'
 import type { Rol } from '@/lib/esquemasComunes'
 
 export type TonoBadge =
+  | EventCategory
   | EventStatus
   | TicketStatus
   | TicketType
@@ -16,6 +17,14 @@ export type TonoBadge =
   | 'neutro'
 
 const ESTILOS_BADGE: Record<TonoBadge, string> = {
+  // EventCategory
+  MUSIC: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300',
+  SPORTS: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+  TECHNOLOGY: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300',
+  EDUCATION: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+  CULTURE: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
+  ENTERTAINMENT: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300',
+
   // EventStatus
   DRAFT: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
   PUBLISHED: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
