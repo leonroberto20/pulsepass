@@ -1,4 +1,5 @@
-import { Link, useParams, useLocation } from 'react-router'
+import { useState } from 'react'
+import { Link, useParams, useLocation, useNavigate } from 'react-router'
 import {
   Calendar,
   MapPin,
@@ -10,24 +11,50 @@ import {
   LogIn,
   CheckCircle2,
   AlertTriangle,
+  Mail,
 } from 'lucide-react'
 import { useEvento } from '@/funcionalidades/eventos/useEventos'
 import { useAuth } from '@/funcionalidades/auth/useAuth'
+import { useComprarTicket } from '@/funcionalidades/tickets/useTickets'
 import type { EventCategory, EventStatus } from '@/funcionalidades/eventos/tipos'
+import type { TicketType } from '@/funcionalidades/tickets/tipos'
 import {
   Tarjeta,
   Badge,
   Boton,
+  Modal,
+  Selector,
+  Aviso,
   Cargando,
   EstadoError,
 } from '@/componentes'
-import { formatearFechaHora } from '@/lib/formato'
+import { formatearFechaHora, formatearCOP } from '@/lib/formato'
 import { RUTAS } from '@/lib/rutas'
+import { ApiError } from '@/lib/http'
+
+const PRECIOS_ESTIMADOS: Record<TicketType, number> = {
+  GENERAL: 85000,
+  STUDENT: 50000,
+  VIP: 180000,
+  BACKSTAGE: 320000,
+}
+
+const OPCIONES_TIPO_TICKET = [
+  { valor: 'GENERAL', etiqueta: 'General - $ 85.000 COP' },
+  { valor: 'VIP', etiqueta: 'VIP - $ 180.000 COP' },
+  { valor: 'BACKSTAGE', etiqueta: 'Backstage Pass - $ 320.000 COP' },
+  { valor: 'STUDENT', etiqueta: 'Estudiante (con carnet) - $ 50.000 COP' },
+]
 
 export default function DetalleEvento() {
   const { eventCode } = useParams<{ eventCode: string }>()
   const location = useLocation()
+  const navigate = useNavigate()
   const { sesion } = useAuth()
+
+  const [modalCompraAbierta, setModalCompraAbierta] = useState(false)
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<TicketType>('GENERAL')
+  const [errorCompra, setErrorCompra] = useState<string | null>(null)
 
   const {
     data: evento,
@@ -36,6 +63,8 @@ export default function DetalleEvento() {
     error,
     refetch,
   } = useEvento(eventCode)
+
+  const comprarTicketMutation = useComprarTicket()
 
   if (isLoading) {
     return (
@@ -68,6 +97,28 @@ export default function DetalleEvento() {
   const estaAgotado = evento.status === 'SOLD_OUT'
   const estaCancelado = evento.status === 'CANCELLED'
   const estaFinalizado = evento.status === 'FINISHED'
+
+  async function handleConfirmarCompra() {
+    if (sesion.estado !== 'autenticado' || !evento) return
+    setErrorCompra(null)
+
+    try {
+      const ticket = await comprarTicketMutation.mutateAsync({
+        eventCode: evento.eventCode,
+        userEmail: sesion.usuario.email,
+        type: tipoSeleccionado,
+      })
+
+      setModalCompraAbierta(false)
+      navigate(RUTAS.compraConfirmacion(ticket.ticketCode))
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setErrorCompra(err.message || 'Error al procesar la compra.')
+      } else {
+        setErrorCompra('No se pudo establecer conexión para completar la orden.')
+      }
+    }
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -199,15 +250,14 @@ export default function DetalleEvento() {
               </div>
 
               {sesion.estado === 'autenticado' ? (
-                <Link to={`/compra/${evento.eventCode}`}>
-                  <Boton
-                    variante="primario"
-                    className="py-3 px-6 text-base font-semibold"
-                    icono={<Ticket className="h-5 w-5" />}
-                  >
-                    Comprar Entradas
-                  </Boton>
-                </Link>
+                <Boton
+                  variante="primario"
+                  className="py-3 px-6 text-base font-semibold shadow-md"
+                  onClick={() => setModalCompraAbierta(true)}
+                  icono={<Ticket className="h-5 w-5" />}
+                >
+                  Comprar Entradas
+                </Boton>
               ) : (
                 <Link to={RUTAS.login} state={{ desde: location.pathname }}>
                   <Boton
@@ -290,6 +340,75 @@ export default function DetalleEvento() {
           </p>
         )}
       </div>
+
+      {/* Modal de Compra de Entrada */}
+      {modalCompraAbierta && sesion.estado === 'autenticado' && (
+        <Modal
+          abierta={modalCompraAbierta}
+          onCerrar={() => setModalCompraAbierta(false)}
+          titulo="Comprar Entrada para el Evento"
+        >
+          <div className="space-y-4">
+            <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <h4 className="font-bold text-slate-900 dark:text-white">{evento.name}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {formatearFechaHora(evento.eventDate)} • {evento.venueName}
+              </p>
+
+              <div className="mt-3 flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
+                <Mail className="h-4 w-4 text-slate-400 shrink-0" />
+                <span>Titular: <strong>{sesion.usuario.email}</strong></span>
+              </div>
+            </div>
+
+            {errorCompra && (
+              <Aviso tipo="error" titulo="No se pudo procesar la compra" onCerrar={() => setErrorCompra(null)}>
+                {errorCompra}
+              </Aviso>
+            )}
+
+            <div>
+              <Selector
+                etiqueta="Selecciona el tipo de localidad"
+                opciones={OPCIONES_TIPO_TICKET}
+                value={tipoSeleccionado}
+                onChange={(e) => setTipoSeleccionado(e.target.value as TicketType)}
+              />
+            </div>
+
+            <div className="rounded-xl border border-dashed border-slate-200 p-4 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <span className="text-xs text-slate-500 uppercase tracking-wider">Total a pagar:</span>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                  {formatearCOP(PRECIOS_ESTIMADOS[tipoSeleccionado])}
+                </p>
+              </div>
+              <Badge tono={tipoSeleccionado} className="text-sm px-3 py-1">
+                {tipoSeleccionado}
+              </Badge>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Boton
+                variante="secundario"
+                onClick={() => setModalCompraAbierta(false)}
+                className="flex-1"
+                disabled={comprarTicketMutation.isPending}
+              >
+                Cancelar
+              </Boton>
+              <Boton
+                variante="primario"
+                onClick={handleConfirmarCompra}
+                cargando={comprarTicketMutation.isPending}
+                className="flex-1"
+              >
+                Confirmar Compra
+              </Boton>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

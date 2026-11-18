@@ -2,7 +2,8 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 
 export interface ModalProps {
-  abierto: boolean
+  abierto?: boolean
+  abierta?: boolean
   titulo: string
   onCerrar: () => void
   children: ReactNode
@@ -12,12 +13,14 @@ export interface ModalProps {
 
 export function Modal({
   abierto,
+  abierta,
   titulo,
   onCerrar,
   children,
   pie,
   anchoMaximo = 'max-w-lg',
 }: ModalProps) {
+  const estaAbierto = abierto ?? abierta ?? false
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -27,7 +30,7 @@ export function Modal({
       }
     }
 
-    if (abierto) {
+    if (estaAbierto) {
       document.body.style.overflow = 'hidden'
       window.addEventListener('keydown', manejarTecla)
     }
@@ -36,9 +39,9 @@ export function Modal({
       document.body.style.overflow = ''
       window.removeEventListener('keydown', manejarTecla)
     }
-  }, [abierto, onCerrar])
+  }, [estaAbierto, onCerrar])
 
-  if (!abierto) return null
+  if (!estaAbierto) return null
 
   return (
     <div

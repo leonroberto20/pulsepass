@@ -8,7 +8,7 @@ export interface OpcionSelector {
 }
 
 export interface SelectorProps extends ComponentProps<'select'> {
-  etiqueta: string
+  etiqueta?: string
   error?: string
   ayuda?: string
   opciones?: OpcionSelector[]
@@ -25,17 +25,20 @@ export const Selector = forwardRef<HTMLSelectElement, SelectorProps>(function Se
 
   return (
     <div className="flex flex-col gap-1.5 text-left">
-      <label
-        htmlFor={selectId}
-        className="text-sm font-medium text-slate-700 dark:text-slate-300"
-      >
-        {etiqueta}
-        {props.required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
-      </label>
+      {etiqueta && (
+        <label
+          htmlFor={selectId}
+          className="text-sm font-medium text-slate-700 dark:text-slate-300"
+        >
+          {etiqueta}
+          {props.required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
+        </label>
+      )}
 
       <select
         ref={ref}
         id={selectId}
+        aria-label={!etiqueta ? props['aria-label'] || 'Seleccionar opción' : undefined}
         aria-invalid={Boolean(error)}
         aria-describedby={clsx(error && errorId, ayuda && ayudaId) || undefined}
         className={clsx(

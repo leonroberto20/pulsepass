@@ -10,6 +10,8 @@ export function formatearMonedaCOP(valor: number): string {
   }).format(valor)
 }
 
+export const formatearCOP = formatearMonedaCOP
+
 export function formatearFecha(fecha: string | Date): string {
   try {
     const f = typeof fecha === 'string' ? new Date(fecha) : fecha
