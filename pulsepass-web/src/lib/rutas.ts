@@ -16,10 +16,13 @@ export const RUTAS = {
   ticketDetalle: (ticketCode: string) => `/mis-tickets/${ticketCode}`,
   compraConfirmacion: (ticketCode: string) => `/compra/confirmacion/${ticketCode}`,
   staffValidacion: '/staff/validacion',
+  validacionIngreso: '/staff/validacion',
   staffEventosTickets: (eventCode: string) => `/staff/eventos/${eventCode}/tickets`,
+  staffEventoTickets: (eventCode: string) => `/staff/eventos/${eventCode}/tickets`,
   adminEventos: '/admin/eventos',
   adminCrearEvento: '/admin/eventos/nuevo',
   adminGestionEvento: (eventCode: string) => `/admin/eventos/${eventCode}`,
+  adminEventoGestion: (eventCode: string) => `/admin/eventos/${eventCode}`,
   sinPermisos: '/403',
   noEncontrada: '/404',
 } as const

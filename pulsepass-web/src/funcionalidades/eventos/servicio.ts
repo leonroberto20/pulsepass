@@ -1,5 +1,5 @@
 import { http } from '@/lib/http'
-import type { EventResponse, EventSummaryResponse } from './tipos'
+import type { CreateEventRequest, EventResponse, EventSummaryResponse } from './tipos'
 import { EventResponseSchema, EventSummaryListResponseSchema } from './esquemas'
 
 export const eventosServicio = {
@@ -20,6 +20,28 @@ export const eventosServicio = {
       `/events/by-artist?stageName=${encodeURIComponent(stageName)}`,
       {
         schema: EventSummaryListResponseSchema,
+      },
+    )
+  },
+
+  async crear(datos: CreateEventRequest): Promise<EventResponse> {
+    return http.post<EventResponse>('/events', datos, {
+      schema: EventResponseSchema,
+    })
+  },
+
+  async publicar(eventCode: string): Promise<EventResponse> {
+    return http.patch<EventResponse>(`/events/${encodeURIComponent(eventCode)}/publish`, {}, {
+      schema: EventResponseSchema,
+    })
+  },
+
+  async agregarArtista(eventCode: string, artistId: number | string): Promise<EventResponse> {
+    return http.post<EventResponse>(
+      `/events/${encodeURIComponent(eventCode)}/artists/${encodeURIComponent(artistId)}`,
+      {},
+      {
+        schema: EventResponseSchema,
       },
     )
   },

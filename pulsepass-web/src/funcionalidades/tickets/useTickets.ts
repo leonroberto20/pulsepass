@@ -47,3 +47,26 @@ export function useCancelarTicket() {
     },
   })
 }
+
+export function useMarcarTicketUsado() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (ticketCode: string) => ticketsServicio.marcarUsado(ticketCode),
+    onSuccess: (_data, ticketCode) => {
+      queryClient.invalidateQueries({ queryKey: ['tickets', 'detalle', ticketCode] })
+      queryClient.invalidateQueries({ queryKey: ['tickets', 'porEvento'] })
+    },
+  })
+}
+
+export function useTicketsPagadosPorEvento(eventCode: string | undefined) {
+  return useQuery({
+    queryKey: ['tickets', 'porEvento', eventCode],
+    queryFn: () => {
+      if (!eventCode) throw new Error('Código de evento no especificado')
+      return ticketsServicio.listarPagadosPorEvento(eventCode)
+    },
+    enabled: Boolean(eventCode),
+  })
+}
